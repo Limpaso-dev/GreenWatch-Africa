@@ -1,0 +1,65 @@
+import { Link, useNavigate } from "react-router-dom";
+
+function Navbar() {
+  const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const logout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
+  window.location.href = "/";
+};
+
+  return (
+    <nav className="bg-green-700 text-white shadow">
+      <div className="max-w-6xl mx-auto flex justify-between items-center p-4">
+
+        <h1 className="font-bold text-xl">
+          GreenWatch Africa
+        </h1>
+
+        
+        <div className="flex gap-6 items-center">
+
+          <Link to="/home" className="hover:text-green-200">
+  Home
+</Link>
+<Link to="/dashboard" className="hover:text-green-200">
+            Dashboard
+          </Link>
+          
+
+          <Link to="/report" className="hover:text-green-200">
+            Report Crime
+          </Link>
+
+          <Link to="/my-reports" className="hover:text-green-200">
+            My Reports
+          </Link>
+
+          {user?.role === "admin" && (
+            <span className="text-sm bg-yellow-400 text-black px-2 py-1 rounded">
+              Admin
+            </span>
+          )}
+
+          <Link to="/education" className="hover:text-green-200">
+  Education
+</Link>
+
+          <button
+  onClick={logout}
+  className="bg-green-600 px-4 py-1 rounded hover:bg-green-500"
+>
+  Logout
+</button>
+          
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+export default Navbar;
