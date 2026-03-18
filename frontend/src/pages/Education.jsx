@@ -1,5 +1,5 @@
 import Navbar from "../components/Navbar";
-
+import Footer from "../components/Footer";
 function Education() {
   return (
     <div className="min-h-screen bg-green-50">
@@ -12,9 +12,9 @@ function Education() {
           Environmental Education
         </h2>
 
-        <p className="text-gray-600 mb-8">
-          Learn about forest conservation, environmental protection, and how you can contribute.
-        </p>
+       <p className="text-gray-600 mb-8 text-2xl font-bold">
+  Learn about forest conservation, environmental protection, and how you can contribute.
+</p>
 
         <div className="grid md:grid-cols-2 gap-6">
 
@@ -59,6 +59,8 @@ function Education() {
         </div>
 
       </div>
+      {/* Footer always at bottom */}
+      <Footer />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
-
+import Footer from "../components/Footer";
 function ReportCrime() {
 
   const [type, setType] = useState("");
@@ -121,6 +121,8 @@ function ReportCrime() {
         </form>
 
       </div>
+      {/* Footer always at bottom */}
+      <Footer />
     </div>
   );
 }

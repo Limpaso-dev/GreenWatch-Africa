@@ -1,83 +1,92 @@
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen flex flex-col bg-green-50">
 
       <Navbar />
 
-      <div className="max-w-6xl mx-auto p-10">
+      {/* Main content */}
+      <div className="flex-grow pt-24">
 
-        {/* Title */}
-        <h2 className="text-3xl font-bold text-green-700 mb-4">
-          Welcome to GreenWatch Africa 🌍
-        </h2>
+        {/* Hero Section */}
+        <div className="max-w-6xl mx-auto px-6 text-center mb-12">
+          <h2 className="text-4xl font-extrabold text-green-800 mb-4">
+            Welcome to GreenWatch Africa
+          </h2>
 
-        <p className="text-gray-600 mb-10">
-          A digital platform for reporting environmental crimes, monitoring forest activities, and promoting conservation awareness.
-        </p>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            A digital platform for reporting environmental crimes, monitoring forest activities,
+            and promoting conservation awareness across Africa.
+          </p>
+        </div>
 
-        {/* Navigation cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Cards Section */}
+        <div className="max-w-6xl mx-auto px-6 pb-16">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
 
-          {/* Report */}
-          <div
-            onClick={() => navigate("/report")}
-            className="bg-white p-6 rounded shadow cursor-pointer hover:shadow-lg transition"
-          >
-            <h3 className="text-lg font-semibold text-green-700 mb-2">
-              Report Crime
-            </h3>
-            <p className="text-sm text-gray-600">
-              Submit environmental crime reports.
-            </p>
+            {/* Report */}
+            <div
+              onClick={() => navigate("/report")}
+              className="bg-white p-6 rounded-2xl shadow-md cursor-pointer hover:shadow-xl hover:-translate-y-1 transition duration-300"
+            >
+              <h3 className="text-lg font-semibold text-green-700 mb-2">
+                Report Crime
+              </h3>
+              <p className="text-sm text-gray-600">
+                Submit environmental crime reports quickly and securely.
+              </p>
+            </div>
+
+            {/* My Reports */}
+            <div
+              onClick={() => navigate("/my-reports")}
+              className="bg-white p-6 rounded-2xl shadow-md cursor-pointer hover:shadow-xl hover:-translate-y-1 transition duration-300"
+            >
+              <h3 className="text-lg font-semibold text-blue-600 mb-2">
+                My Reports
+              </h3>
+              <p className="text-sm text-gray-600">
+                Track and manage all your submitted reports.
+              </p>
+            </div>
+
+            {/* Dashboard */}
+            <div
+              onClick={() => navigate("/dashboard")}
+              className="bg-white p-6 rounded-2xl shadow-md cursor-pointer hover:shadow-xl hover:-translate-y-1 transition duration-300"
+            >
+              <h3 className="text-lg font-semibold text-purple-600 mb-2">
+                Dashboard
+              </h3>
+              <p className="text-sm text-gray-600">
+                View insights, analytics, and environmental trends.
+              </p>
+            </div>
+
+            {/* Education */}
+            <div
+              onClick={() => navigate("/education")}
+              className="bg-white p-6 rounded-2xl shadow-md cursor-pointer hover:shadow-xl hover:-translate-y-1 transition duration-300"
+            >
+              <h3 className="text-lg font-semibold text-yellow-600 mb-2">
+                Education
+              </h3>
+              <p className="text-sm text-gray-600">
+                Learn about conservation and protecting ecosystems.
+              </p>
+            </div>
+
           </div>
-
-          {/* My Reports */}
-          <div
-            onClick={() => navigate("/my-reports")}
-            className="bg-white p-6 rounded shadow cursor-pointer hover:shadow-lg transition"
-          >
-            <h3 className="text-lg font-semibold text-blue-600 mb-2">
-              My Reports
-            </h3>
-            <p className="text-sm text-gray-600">
-              View and manage submitted reports.
-            </p>
-          </div>
-
-          {/* Dashboard */}
-          <div
-            onClick={() => navigate("/dashboard")}
-            className="bg-white p-6 rounded shadow cursor-pointer hover:shadow-lg transition"
-          >
-            <h3 className="text-lg font-semibold text-purple-600 mb-2">
-              Dashboard
-            </h3>
-            <p className="text-sm text-gray-600">
-              View analytics and trends.
-            </p>
-          </div>
-
-          {/* Education */}
-          <div
-            onClick={() => navigate("/education")}
-            className="bg-white p-6 rounded shadow cursor-pointer hover:shadow-lg transition"
-          >
-            <h3 className="text-lg font-semibold text-yellow-600 mb-2">
-              Education
-            </h3>
-            <p className="text-sm text-gray-600">
-              Learn about environmental conservation.
-            </p>
-          </div>
-
         </div>
 
       </div>
+
+      <Footer />
 
     </div>
   );

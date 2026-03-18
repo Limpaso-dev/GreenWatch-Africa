@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
-
+import Footer from "../components/Footer";
 function MyReports() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +111,8 @@ function MyReports() {
           </div>
         )}
       </div>
+      {/* Footer always at bottom */}
+      <Footer />
     </div>
   );
 }
