@@ -9,7 +9,6 @@ import MyReports from "./pages/MyReports";
 import Education from "./pages/Education";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
-
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -31,22 +30,24 @@ function App() {
             </ProtectedRoute>
           }
         />
-  <Route
-  path="/admin"
-  element={
-    <ProtectedRoute adminOnly={true}>
-      <Admin />
-    </ProtectedRoute>
-  }
-/>
+
         <Route
-  path="/education"
-  element={
-    <ProtectedRoute>
-      <Education />
-    </ProtectedRoute>
-  }
-/>
+          path="/admin"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/education"
+          element={
+            <ProtectedRoute>
+              <Education />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/report"
@@ -56,14 +57,15 @@ function App() {
             </ProtectedRoute>
           }
         />
-     <Route
-  path="/home"
-  element={
-    <ProtectedRoute>
-      <Home />
-    </ProtectedRoute>
-  }
-/>
+
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/my-reports"

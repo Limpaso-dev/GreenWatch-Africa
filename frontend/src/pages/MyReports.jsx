@@ -2,22 +2,17 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+
 function MyReports() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const user = JSON.parse(localStorage.getItem("user"));
-  const token = localStorage.getItem("token");
 
-  // Fetch reports
+  // ================= FETCH REPORTS =================
   const fetchReports = async () => {
     try {
-      const res = await API.get("/reports", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
+      const res = await API.get("/reports"); // ✅ token auto-attached
       setReports(res.data.reports);
     } catch (error) {
       alert("Failed to fetch reports");
@@ -30,18 +25,14 @@ function MyReports() {
     fetchReports();
   }, []);
 
-  // Delete report
+  // ================= DELETE =================
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this report?")) return;
 
     try {
-      await API.delete(`/reports/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      await API.delete(`/reports/${id}`); // ✅ no manual headers
 
-      // Refresh list
+      // update UI instantly
       setReports((prev) => prev.filter((r) => r._id !== id));
 
     } catch (error) {
@@ -50,10 +41,12 @@ function MyReports() {
   };
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen flex flex-col bg-green-50">
+
       <Navbar />
 
-      <div className="p-6">
+      <div className="flex-grow p-6 max-w-6xl mx-auto">
+
         <h2 className="text-2xl font-bold mb-6 text-green-700">
           My Reports
         </h2>
@@ -64,11 +57,14 @@ function MyReports() {
           <p>No reports found.</p>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
+
             {reports.map((report) => (
+
               <div
                 key={report._id}
                 className="bg-white p-4 rounded shadow"
               >
+
                 <h3 className="text-lg font-semibold text-green-800">
                   {report.type}
                 </h3>
@@ -91,28 +87,39 @@ function MyReports() {
                 {/* Status */}
                 <p className="text-sm mb-2">
                   Status:{" "}
-                  <span className="font-semibold text-green-600">
+                  <span
+                    className={`font-semibold ${
+                      report.status === "resolved"
+                        ? "text-green-600"
+                        : "text-yellow-600"
+                    }`}
+                  >
                     {report.status}
                   </span>
                 </p>
 
-                {/* Delete button (admin OR owner) */}
+                {/* Delete (owner OR admin) */}
                 {(user?.role === "admin" ||
                   report.reportedBy?._id === user?._id) && (
                   <button
                     onClick={() => handleDelete(report._id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded"
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
                   >
                     Delete
                   </button>
                 )}
+
               </div>
+
             ))}
+
           </div>
         )}
+
       </div>
-      {/* Footer always at bottom */}
+
       <Footer />
+
     </div>
   );
 }

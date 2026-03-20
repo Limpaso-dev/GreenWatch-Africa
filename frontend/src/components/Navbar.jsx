@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 function Navbar() {
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  // ✅ Safe parsing (prevents crash if null)
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -21,6 +22,13 @@ function Navbar() {
 
         <div className="flex gap-6 items-center">
 
+          {/* Admin link */}
+          {user?.role === "admin" && (
+            <Link to="/admin" className="hover:text-green-200">
+              Admin Panel
+            </Link>
+          )}
+
           <Link to="/home" className="hover:text-green-200">
             Home
           </Link>
@@ -37,6 +45,7 @@ function Navbar() {
             My Reports
           </Link>
 
+          {/* Admin badge */}
           {user?.role === "admin" && (
             <span className="text-sm bg-yellow-400 text-black px-2 py-1 rounded">
               Admin
