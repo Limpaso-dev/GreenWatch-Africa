@@ -7,6 +7,7 @@ const fs = require("fs");
 
 const authRoutes = require("./routes/auth.routes");
 const reportRoutes = require("./routes/report.routes");
+const adminRoutes = require("./routes/admin.routes");
 
 dotenv.config();
 
@@ -44,7 +45,7 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
-
+app.use("/api/admin", adminRoutes);
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });

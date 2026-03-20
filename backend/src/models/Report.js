@@ -37,4 +37,5 @@ const reportSchema = new mongoose.Schema(
 { timestamps: true }
 );
 
-module.exports = mongoose.model("Report", reportSchema);
+// ✅ FIXED EXPORT
+module.exports = mongoose.models.Report || mongoose.model("Report", reportSchema);

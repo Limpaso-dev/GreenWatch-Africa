@@ -1,4 +1,4 @@
-const Report = require("../models/Report");
+const Report = require("../models/report");
 
 // ================= CREATE REPORT =================
 const createReport = async (req, res) => {
@@ -33,9 +33,30 @@ const createReport = async (req, res) => {
   }
 };
 
-// ================= GET ALL REPORTS =================
+// ================= GET MY REPORTS =================
 const getReports = async (req, res) => {
   try {
+    const reports = await Report
+      .find({ reportedBy: req.user._id }) // ✅ CORRECT
+      .populate("reportedBy", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json({ reports });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+// ================= GET ALL REPORTS (ADMIN ONLY) =================
+const getAllReports = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
     const reports = await Report
       .find()
       .populate("reportedBy", "name email")
@@ -61,7 +82,6 @@ const deleteReport = async (req, res) => {
       });
     }
 
-    // Admin OR owner
     if (
       req.user.role !== "admin" &&
       report.reportedBy.toString() !== req.user._id.toString()
@@ -84,7 +104,7 @@ const deleteReport = async (req, res) => {
   }
 };
 
-// ================= UPDATE STATUS (ADMIN ONLY) =================
+// ================= UPDATE STATUS =================
 const updateReportStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -103,7 +123,6 @@ const updateReportStatus = async (req, res) => {
       });
     }
 
-    // Only admin can update status
     if (req.user.role !== "admin") {
       return res.status(403).json({
         message: "Not authorized"
@@ -128,6 +147,7 @@ const updateReportStatus = async (req, res) => {
 module.exports = {
   createReport,
   getReports,
+  getAllReports,
   deleteReport,
   updateReportStatus
 };

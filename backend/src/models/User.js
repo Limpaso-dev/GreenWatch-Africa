@@ -33,4 +33,5 @@ const userSchema = new mongoose.Schema(
 { timestamps: true }
 );
 
-module.exports = mongoose.model("User", userSchema);
+// ✅ FIXED EXPORT (prevents overwrite error)
+module.exports = mongoose.models.User || mongoose.model("User", userSchema);
