@@ -1,12 +1,22 @@
 const express = require("express");
 const router = express.Router();
 
-const { registerUser, loginUser } = require("../controllers/authController");
+const {
+  registerUser,
+  loginUser,
+  getMe, // 
+} = require("../controllers/authController");
 
-// ✅ Register user
+const { protect } = require("../middleware/authMiddleware"); 
+
+
+// Register
 router.post("/register", registerUser);
 
-// ✅ Login user
+// Login
 router.post("/login", loginUser);
+
+// ✅ GET CURRENT USER (FIXES YOUR 404)
+router.get("/me", protect, getMe);
 
 module.exports = router;

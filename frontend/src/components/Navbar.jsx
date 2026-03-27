@@ -32,8 +32,8 @@ function Navbar() {
 
           <Link to="/home" className="hover:text-green-200">Home</Link>
           <Link to="/dashboard" className="hover:text-green-200">Dashboard</Link>
-          <Link to="/report" className="hover:text-green-200">Report</Link>
-          <Link to="/my-reports" className="hover:text-green-200">Reports</Link>
+          <Link to="/report" className="hover:text-green-200">Report Crime</Link>
+          <Link to="/my-reports" className="hover:text-green-200">View Reports</Link>
           <Link to="/education" className="hover:text-green-200">Education</Link>
 
           {user?.role === "admin" && (
@@ -71,7 +71,7 @@ function Navbar() {
 
           <Link to="/home" onClick={() => setOpen(false)}>Home</Link>
           <Link to="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
-          <Link to="/report" onClick={() => setOpen(false)}>Report</Link>
+          <Link to="/report" onClick={() => setOpen(false)}>Report Crime</Link>
           <Link to="/my-reports" onClick={() => setOpen(false)}>My Reports</Link>
           <Link to="/education" onClick={() => setOpen(false)}>Education</Link>
 

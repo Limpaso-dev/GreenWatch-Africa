@@ -18,3 +18,5 @@ build/
 
 # Uploads (optional)
 uploads/
+
+.env

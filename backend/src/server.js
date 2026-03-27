@@ -5,64 +5,94 @@ const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
 
-const authRoutes = require("./routes/auth.routes");
-const reportRoutes = require("./routes/report.routes");
-const adminRoutes = require("./routes/admin.routes");
-
 dotenv.config();
 
 const app = express();
 
-// Connect database
+// ================= CONNECT DB =================
 connectDB();
 
-// Ensure uploads folder exists
+// ================= TRUST PROXY =================
+app.set("trust proxy", 1);
+
+// ================= ENSURE UPLOADS DIR =================
 const uploadsDir = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Middleware
+// ================= MIDDLEWARE =================
+
+// JSON parser
 app.use(express.json());
+
+// URL encoded
 app.use(express.urlencoded({ extended: true }));
 
-// CORS
+// ================= CORS =================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.FRONTEND_URL,
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow Postman + M-Pesa
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.warn("❌ Blocked by CORS:", origin);
+        return callback(new Error("CORS not allowed"), false);
+      }
+    },
     credentials: true,
   })
 );
 
-// Serve uploads
-app.use("/uploads", express.static(uploadsDir));
-
-// Health check
-app.get("/", (req, res) => {
-  res.send("GreenWatch Africa Backend is running");
+// ================= LOGGER =================
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.originalUrl}`);
+  next();
 });
 
-// Routes
+// ================= STATIC =================
+app.use("/uploads", express.static(uploadsDir));
+
+// ================= ROUTES =================
+const authRoutes = require("./routes/auth.routes");
+const reportRoutes = require("./routes/report.routes");
+const adminRoutes = require("./routes/admin.routes");
+const mpesaRoutes = require("./routes/mpesa.routes");
+
+app.get("/", (req, res) => {
+  res.send("🌍 GreenWatch Africa Backend is running...");
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/admin", adminRoutes);
-// 404 handler
+app.use("/api/mpesa", mpesaRoutes);
+
+// ================= 404 =================
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Global error handler
+// ================= ERROR HANDLER =================
 app.use((err, req, res, next) => {
-  console.error("SERVER ERROR:", err.message);
+  console.error("❌ SERVER ERROR:", err.message);
 
   res.status(err.status || 500).json({
     message: err.message || "Internal Server Error",
   });
 });
 
-// Start server
+// ================= START =================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 GreenWatch Africa server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

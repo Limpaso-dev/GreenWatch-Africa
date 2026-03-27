@@ -1,4 +1,5 @@
-const Report = require("../models/report");
+const Report = require("../models/Report");
+const fs = require("fs");
 
 // ================= CREATE REPORT =================
 const createReport = async (req, res) => {
@@ -7,7 +8,7 @@ const createReport = async (req, res) => {
 
     if (!type || !description || !location) {
       return res.status(400).json({
-        message: "All fields (type, description, location) are required"
+        message: "All fields (type, description, location) are required",
       });
     }
 
@@ -18,17 +19,19 @@ const createReport = async (req, res) => {
       description,
       location,
       photo,
-      reportedBy: req.user._id
+      reportedBy: req.user._id,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Report submitted successfully",
-      report
+      report,
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: error.message
+    console.error("❌ Create Report Error:", error.message);
+
+    return res.status(500).json({
+      message: "Failed to create report",
     });
   }
 };
@@ -36,37 +39,35 @@ const createReport = async (req, res) => {
 // ================= GET MY REPORTS =================
 const getReports = async (req, res) => {
   try {
-    const reports = await Report
-      .find({ reportedBy: req.user._id }) // ✅ CORRECT
+    const reports = await Report.find({ reportedBy: req.user._id })
       .populate("reportedBy", "name email")
       .sort({ createdAt: -1 });
 
-    res.json({ reports });
+    return res.json({ reports });
 
   } catch (error) {
-    res.status(500).json({
-      message: error.message
+    console.error("❌ Get Reports Error:", error.message);
+
+    return res.status(500).json({
+      message: "Failed to fetch reports",
     });
   }
 };
 
-// ================= GET ALL REPORTS (ADMIN ONLY) =================
+// ================= GET ALL REPORTS (ADMIN) =================
 const getAllReports = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    const reports = await Report
-      .find()
+    const reports = await Report.find()
       .populate("reportedBy", "name email")
       .sort({ createdAt: -1 });
 
-    res.json({ reports });
+    return res.json({ reports });
 
   } catch (error) {
-    res.status(500).json({
-      message: error.message
+    console.error("❌ Get All Reports Error:", error.message);
+
+    return res.status(500).json({
+      message: "Failed to fetch all reports",
     });
   }
 };
@@ -78,40 +79,48 @@ const deleteReport = async (req, res) => {
 
     if (!report) {
       return res.status(404).json({
-        message: "Report not found"
+        message: "Report not found",
       });
     }
 
+    // Check ownership or admin
     if (
       req.user.role !== "admin" &&
       report.reportedBy.toString() !== req.user._id.toString()
     ) {
       return res.status(403).json({
-        message: "Not authorized to delete this report"
+        message: "Not authorized to delete this report",
       });
+    }
+
+    // ✅ Delete image if exists
+    if (report.photo && fs.existsSync(report.photo)) {
+      fs.unlinkSync(report.photo);
     }
 
     await report.deleteOne();
 
-    res.json({
-      message: "Report deleted successfully"
+    return res.json({
+      message: "Report deleted successfully",
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: error.message
+    console.error("❌ Delete Report Error:", error.message);
+
+    return res.status(500).json({
+      message: "Failed to delete report",
     });
   }
 };
 
-// ================= UPDATE STATUS =================
+// ================= UPDATE STATUS (ADMIN) =================
 const updateReportStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
     if (!["pending", "resolved"].includes(status)) {
       return res.status(400).json({
-        message: "Invalid status"
+        message: "Invalid status",
       });
     }
 
@@ -119,27 +128,23 @@ const updateReportStatus = async (req, res) => {
 
     if (!report) {
       return res.status(404).json({
-        message: "Report not found"
-      });
-    }
-
-    if (req.user.role !== "admin") {
-      return res.status(403).json({
-        message: "Not authorized"
+        message: "Report not found",
       });
     }
 
     report.status = status;
     await report.save();
 
-    res.json({
+    return res.json({
       message: "Report status updated",
-      report
+      report,
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: error.message
+    console.error("❌ Update Status Error:", error.message);
+
+    return res.status(500).json({
+      message: "Failed to update report status",
     });
   }
 };
@@ -149,5 +154,5 @@ module.exports = {
   getReports,
   getAllReports,
   deleteReport,
-  updateReportStatus
+  updateReportStatus,
 };

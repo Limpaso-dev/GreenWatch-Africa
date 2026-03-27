@@ -9,8 +9,12 @@ function Register() {
     name: "",
     email: "",
     password: "",
+    phone: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
+  // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -18,15 +22,26 @@ function Register() {
     });
   };
 
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!form.phone) {
+      return alert("Phone number is required for M-Pesa payments");
+    }
+
     try {
+      setLoading(true);
+
       await API.post("/auth/register", form);
-      alert("Registration successful");
+
+      alert("✅ Registration successful");
       navigate("/login");
+
     } catch (error) {
       alert(error.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,6 +61,7 @@ function Register() {
           placeholder="Full Name"
           onChange={handleChange}
           className="w-full p-2 mb-4 border rounded"
+          required
         />
 
         <input
@@ -54,6 +70,16 @@ function Register() {
           placeholder="Email"
           onChange={handleChange}
           className="w-full p-2 mb-4 border rounded"
+          required
+        />
+
+        <input
+          type="text"
+          name="phone"
+          placeholder="Phone (07XXXXXXXX)"
+          onChange={handleChange}
+          className="w-full p-2 mb-4 border rounded"
+          required
         />
 
         <input
@@ -62,10 +88,14 @@ function Register() {
           placeholder="Password"
           onChange={handleChange}
           className="w-full p-2 mb-4 border rounded"
+          required
         />
 
-        <button className="w-full bg-green-600 text-white p-2 rounded">
-          Register
+        <button
+          disabled={loading}
+          className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700"
+        >
+          {loading ? "Registering..." : "Register"}
         </button>
       </form>
     </div>

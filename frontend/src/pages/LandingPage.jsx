@@ -10,43 +10,35 @@ function LandingPage() {
     <div className="min-h-screen flex flex-col">
 
       {/* Hero Section */}
-      <div className="relative flex-grow">
+      <div className="relative w-full h-[70vh] md:h-[75vh]">
 
-        {/* Background */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${forestHero})` }}
-        ></div>
+        {/* Image */}
+        <img
+          src={forestHero}
+          alt="Forest"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/60"></div>
 
-        {/* ✅ Responsive Navbar */}
-        <nav className="fixed top-0 left-0 z-20 w-full text-white bg-black/30 backdrop-blur-sm">
-          <div className="max-w-6xl mx-auto flex justify-between items-center px-4 py-3">
+        {/* Navbar */}
+        <nav className="fixed top-0 left-0 z-20 w-full text-white bg-black/40 backdrop-blur-md border-b border-white/10">
+          <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
 
-            <h1 className="font-bold text-lg md:text-xl">
+            <h1 className="font-bold text-xl tracking-wide">
               GreenWatch Africa
             </h1>
 
-            {/* Desktop */}
-            <div className="hidden md:flex gap-4">
-              <Link
-                to="/login"
-                className="bg-green-600 px-4 py-1 rounded hover:bg-green-500 transition"
-              >
+            <div className="hidden md:flex items-center gap-4">
+              <Link to="/login" className="px-4 py-2 hover:bg-white/10 rounded transition">
                 Login
               </Link>
-
-              <Link
-                to="/register"
-                className="border border-white px-4 py-1 rounded hover:bg-green-600 transition"
-              >
-                Register
+              <Link to="/register" className="bg-green-600 px-5 py-2 rounded-md font-semibold hover:bg-green-500 transition shadow">
+                Get Started
               </Link>
             </div>
 
-            {/* Mobile button */}
             <button
               className="md:hidden text-2xl"
               onClick={() => setOpen(!open)}
@@ -55,56 +47,48 @@ function LandingPage() {
             </button>
           </div>
 
-          {/* Mobile Menu */}
           {open && (
-            <div className="md:hidden px-4 pb-4 flex flex-col gap-3">
-              <Link to="/login" onClick={() => setOpen(false)}>
-                Login
-              </Link>
-              <Link to="/register" onClick={() => setOpen(false)}>
-                Register
-              </Link>
+            <div className="md:hidden px-6 pb-4 flex flex-col gap-3 bg-black/80">
+              <Link to="/login" onClick={() => setOpen(false)}>Login</Link>
+              <Link to="/register" onClick={() => setOpen(false)}>Get Started</Link>
             </div>
           )}
         </nav>
 
-        {/* ✅ Hero Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen px-4 pt-24">
+        {/* Hero Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center h-full px-6 pt-24">
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4 md:mb-6 leading-tight">
-            Protect Forests. <br className="hidden sm:block" />
-            Report Illegal Activities.
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 max-w-2xl">
+            Protect Forests.
+            <span className="block text-green-400 mt-1">
+              Report Illegal Activities.
+            </span>
           </h1>
 
-          <p className="text-white text-sm sm:text-base md:text-lg max-w-xl mb-6 md:mb-8">
-            GreenWatch Africa empowers communities to monitor, report, and protect forests across Africa.
+          <p className="text-gray-200 text-sm md:text-base max-w-xl mb-6">
+            Empowering communities across Africa to monitor and protect forests using technology.
           </p>
 
-          {/* ✅ CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-
+          <div className="flex gap-3 flex-wrap justify-center">
             <Link
               to="/register"
-              className="bg-green-600 px-6 py-3 rounded font-semibold hover:bg-green-500 transition w-full sm:w-auto text-center"
+              className="bg-green-600 px-6 py-2 rounded-md font-medium hover:bg-green-500 transition"
             >
               Get Started
             </Link>
 
             <Link
               to="/login"
-              className="border border-white px-6 py-3 rounded hover:bg-white hover:text-black transition w-full sm:w-auto text-center"
+              className="border border-white px-6 py-2 rounded-md hover:bg-white hover:text-black transition"
             >
               Login
             </Link>
-
           </div>
 
         </div>
-
       </div>
 
       <Footer />
-
     </div>
   );
 }
