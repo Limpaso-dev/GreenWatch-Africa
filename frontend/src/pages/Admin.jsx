@@ -2,91 +2,142 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { Navigate } from "react-router-dom";
+import ReportCard from "../components/ReportCard";
 
 function Admin() {
   const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [savingId, setSavingId] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  // 🔐 Protect route
-  if (user?.role !== "admin") {
-    return <Navigate to="/home" />;
-  }
+  const fetchReports = async () => {
+    try {
+      setErrorMessage("");
+      const res = await API.get("/reports/all");
+      setReports(res.data.reports || []);
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "Failed to fetch reports"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchReports();
   }, []);
 
-  const fetchReports = async () => {
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this report?")) {
+      return;
+    }
+
     try {
-      const res = await API.get("/admin/reports");
-      setReports(res.data); // ✅ FIXED (backend returns array)
-    } catch (err) {
-      console.log("Error fetching reports:", err);
+      await API.delete(`/reports/${id}`);
+      setReports((prev) => prev.filter((report) => report._id !== id));
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "Failed to delete report"
+      );
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleStatusChange = async (id, status) => {
     try {
-      await API.delete(`/admin/reports/${id}`);
-      fetchReports(); // refresh after delete
-    } catch (err) {
-      console.log("Error deleting report:", err);
+      setSavingId(id);
+      await API.put(`/reports/${id}/status`, { status });
+      setReports((prev) =>
+        prev.map((report) =>
+          report._id === id ? { ...report, status } : report
+        )
+      );
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message || "Failed to update report status"
+      );
+    } finally {
+      setSavingId("");
     }
   };
+
+  const pendingCount = reports.filter((report) => report.status === "pending").length;
+  const resolvedCount = reports.filter((report) => report.status === "resolved").length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,_#f5fbf6,_#edf7ef)]">
       <Navbar />
 
-      <main className="flex-grow pt-20 max-w-6xl mx-auto p-6">
-        <h2 className="text-3xl font-bold text-green-700 mb-8">
-          Admin Panel 🛠
-        </h2>
-
-        {/* ✅ Handle empty state */}
-        {reports.length === 0 ? (
-          <p className="text-gray-500">No reports found</p>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {reports.map((report) => (
-              <div
-                key={report._id}
-                className="bg-white rounded-lg shadow-md overflow-hidden"
-              >
-                {report.photo && (
-                  <img
-                    src={`http://localhost:5000/${report.photo}`}
-                    alt="report"
-                    className="h-40 w-full object-cover"
-                  />
-                )}
-
-                <div className="p-4">
-                  <h3 className="font-bold text-green-700">
-                    {report.type}
-                  </h3>
-
-                  <p className="text-gray-600 text-sm mt-2">
-                    {report.description}
-                  </p>
-
-                  <p className="text-xs text-gray-500 mt-2">
-                    {report.location}
-                  </p>
-
-                  <button
-                    onClick={() => handleDelete(report._id)}
-                    className="mt-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-500"
-                  >
-                    Delete
-                  </button>
-                </div>
+      <main className="flex-1 px-4 pb-10 pt-28 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <section className="rounded-[32px] bg-brand-900 px-6 py-8 text-white shadow-soft sm:px-8">
+            <p className="text-sm uppercase tracking-[0.35em] text-green-100/70">
+              Admin Panel
+            </p>
+            <h1 className="mt-3 text-3xl font-semibold">
+              Review, update, and manage incoming reports
+            </h1>
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[24px] bg-white/8 p-4">
+                <p className="text-sm text-green-100/80">All Reports</p>
+                <p className="mt-2 text-3xl font-semibold">{reports.length}</p>
               </div>
-            ))}
-          </div>
-        )}
+              <div className="rounded-[24px] bg-white/8 p-4">
+                <p className="text-sm text-green-100/80">Pending</p>
+                <p className="mt-2 text-3xl font-semibold">{pendingCount}</p>
+              </div>
+              <div className="rounded-[24px] bg-white/8 p-4">
+                <p className="text-sm text-green-100/80">Resolved</p>
+                <p className="mt-2 text-3xl font-semibold">{resolvedCount}</p>
+              </div>
+            </div>
+          </section>
+
+          {loading && (
+            <div className="mt-8 rounded-[28px] border border-brand-100 bg-white p-6 text-slate-500 shadow-soft">
+              Loading admin queue...
+            </div>
+          )}
+
+          {!loading && errorMessage && (
+            <div className="mt-8 rounded-[28px] bg-red-50 p-6 text-red-600 shadow-soft">
+              {errorMessage}
+            </div>
+          )}
+
+          {!loading && !errorMessage && reports.length === 0 && (
+            <div className="mt-8 rounded-[28px] border border-dashed border-brand-200 bg-white/80 p-10 text-center text-slate-500">
+              No reports found.
+            </div>
+          )}
+
+          {!loading && !errorMessage && reports.length > 0 && (
+            <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {reports.map((report) => (
+                <ReportCard
+                  key={report._id}
+                  report={report}
+                  showReporter
+                  showDelete
+                  onDelete={handleDelete}
+                  statusAction={
+                    <select
+                      value={report.status}
+                      onChange={(event) =>
+                        handleStatusChange(report._id, event.target.value)
+                      }
+                      disabled={savingId === report._id}
+                      className="rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-sm outline-none"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                  }
+                />
+              ))}
+            </section>
+          )}
+        </div>
       </main>
 
       <Footer />

@@ -2,20 +2,22 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import ReportCard from "../components/ReportCard";
 
 function MyReports() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  // ================= FETCH REPORTS =================
   const fetchReports = async () => {
     try {
-      const res = await API.get("/reports"); // ✅ token auto-attached
-      setReports(res.data.reports);
+      setErrorMessage("");
+      const res = await API.get("/reports");
+      setReports(res.data.reports || []);
     } catch (error) {
-      alert("Failed to fetch reports");
+      setErrorMessage(
+        error.response?.data?.message || "Failed to fetch reports"
+      );
     } finally {
       setLoading(false);
     }
@@ -25,101 +27,79 @@ function MyReports() {
     fetchReports();
   }, []);
 
-  // ================= DELETE =================
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this report?")) return;
+    if (!window.confirm("Are you sure you want to delete this report?")) {
+      return;
+    }
 
     try {
-      await API.delete(`/reports/${id}`); // ✅ no manual headers
-
-      // update UI instantly
-      setReports((prev) => prev.filter((r) => r._id !== id));
-
+      await API.delete(`/reports/${id}`);
+      setReports((prev) => prev.filter((report) => report._id !== id));
     } catch (error) {
-      alert("Failed to delete report");
+      setErrorMessage(
+        error.response?.data?.message || "Failed to delete report"
+      );
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-green-50">
-
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,_#f5fbf6,_#edf7ef)]">
       <Navbar />
 
-      <div className="flex-grow p-6 max-w-6xl mx-auto">
+      <main className="flex-1 px-4 pb-10 pt-28 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <section className="flex flex-col gap-4 rounded-[32px] bg-white p-6 shadow-soft sm:flex-row sm:items-end sm:justify-between sm:p-8">
+            <div>
+              <p className="text-sm uppercase tracking-[0.35em] text-brand-600">
+                My Reports
+              </p>
+              <h1 className="mt-3 text-3xl font-semibold text-brand-900">
+                Track every report you have submitted
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                Follow the case status, check supporting evidence, and remove reports you no longer want to keep.
+              </p>
+            </div>
+            <div className="rounded-[24px] bg-brand-50 px-5 py-4 text-brand-700">
+              <p className="text-sm">Total reports</p>
+              <p className="mt-1 text-3xl font-semibold">{reports.length}</p>
+            </div>
+          </section>
 
-        <h2 className="text-2xl font-bold mb-6 text-green-700">
-          My Reports
-        </h2>
+          {loading && (
+            <div className="mt-8 rounded-[28px] border border-brand-100 bg-white p-6 text-slate-500 shadow-soft">
+              Loading your reports...
+            </div>
+          )}
 
-        {loading ? (
-          <p>Loading...</p>
-        ) : reports.length === 0 ? (
-          <p>No reports found.</p>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
+          {!loading && errorMessage && (
+            <div className="mt-8 rounded-[28px] bg-red-50 p-6 text-red-600 shadow-soft">
+              {errorMessage}
+            </div>
+          )}
 
-            {reports.map((report) => (
+          {!loading && !errorMessage && reports.length === 0 && (
+            <div className="mt-8 rounded-[28px] border border-dashed border-brand-200 bg-white/70 p-10 text-center text-slate-500">
+              No reports found yet.
+            </div>
+          )}
 
-              <div
-                key={report._id}
-                className="bg-white p-4 rounded shadow"
-              >
-
-                <h3 className="text-lg font-semibold text-green-800">
-                  {report.type}
-                </h3>
-
-                <p className="text-sm text-gray-600 mb-2">
-                  {report.location}
-                </p>
-
-                <p className="mb-3">{report.description}</p>
-
-                {/* Image */}
-                {report.photo && (
-                  <img
-                    src={`http://localhost:5000/${report.photo}`}
-                    alt="report"
-                    className="w-full h-40 object-cover rounded mb-3"
-                  />
-                )}
-
-                {/* Status */}
-                <p className="text-sm mb-2">
-                  Status:{" "}
-                  <span
-                    className={`font-semibold ${
-                      report.status === "resolved"
-                        ? "text-green-600"
-                        : "text-yellow-600"
-                    }`}
-                  >
-                    {report.status}
-                  </span>
-                </p>
-
-                {/* Delete (owner OR admin) */}
-                {(user?.role === "admin" ||
-                  report.reportedBy?._id === user?._id) && (
-                  <button
-                    onClick={() => handleDelete(report._id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
-                )}
-
-              </div>
-
-            ))}
-
-          </div>
-        )}
-
-      </div>
+          {!loading && !errorMessage && reports.length > 0 && (
+            <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {reports.map((report) => (
+                <ReportCard
+                  key={report._id}
+                  report={report}
+                  showDelete
+                  onDelete={handleDelete}
+                />
+              ))}
+            </section>
+          )}
+        </div>
+      </main>
 
       <Footer />
-
     </div>
   );
 }

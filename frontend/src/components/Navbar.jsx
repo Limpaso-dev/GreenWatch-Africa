@@ -1,92 +1,139 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import logo from "../assets/GreenWatch Logo.png";
+import { AuthContext } from "../context/AuthContext";
 
 function Navbar() {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useContext(AuthContext);
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/";
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
+  const closeMenu = () => setOpen(false);
+
+  const navLinks = [
+    { to: "/home", label: "Home" },
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/report", label: "Report Crime" },
+    { to: "/my-reports", label: "My Reports" },
+    { to: "/education", label: "Education" },
+  ];
+
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-green-700 text-white shadow">
-      <div className="max-w-6xl mx-auto flex justify-between items-center p-4">
+    <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-brand-700/95 text-white shadow-soft backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+        <Link to="/home" className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
+            <img
+              src={logo}
+              alt="GreenWatch Africa logo"
+              className="h-8 w-8 object-contain"
+            />
+          </div>
+          <div>
+            <p className="font-semibold tracking-wide">GreenWatch Africa</p>
+            <p className="text-xs text-green-100/80">
+              Community crime reporting
+            </p>
+          </div>
+        </Link>
 
-        {/* Logo */}
-        <h1 className="font-bold text-lg md:text-xl">
-          GreenWatch Africa
-        </h1>
-
-        {/* Desktop Menu */}
-        <div className="hidden md:flex gap-6 items-center">
-
+        <div className="hidden items-center gap-2 lg:flex">
           {user?.role === "admin" && (
-            <Link to="/admin" className="hover:text-green-200">
+            <Link
+              to="/admin"
+              className={`rounded-full px-4 py-2 text-sm transition ${
+                location.pathname === "/admin"
+                  ? "bg-earth-400 text-brand-900"
+                  : "bg-white/8 hover:bg-white/16"
+              }`}
+            >
               Admin Panel
             </Link>
           )}
 
-          <Link to="/home" className="hover:text-green-200">Home</Link>
-          <Link to="/dashboard" className="hover:text-green-200">Dashboard</Link>
-          <Link to="/report" className="hover:text-green-200">Report Crime</Link>
-          <Link to="/my-reports" className="hover:text-green-200">View Reports</Link>
-          <Link to="/education" className="hover:text-green-200">Education</Link>
+          {navLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`rounded-full px-4 py-2 text-sm transition ${
+                location.pathname === link.to
+                  ? "bg-white text-brand-700"
+                  : "hover:bg-white/12"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
 
-          {user?.role === "admin" && (
-            <span className="text-sm bg-yellow-400 text-black px-2 py-1 rounded">
-              Admin
-            </span>
+        <div className="hidden items-center gap-3 lg:flex">
+          {user && (
+            <div className="rounded-full bg-white/10 px-4 py-2 text-right">
+              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-xs text-green-100/80">
+                {user.role === "admin" ? "Administrator" : "Reporter"}
+              </p>
+            </div>
           )}
 
           <button
-            onClick={logout}
-            className="bg-green-600 px-4 py-1 rounded hover:bg-green-500"
+            onClick={handleLogout}
+            className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-700 transition hover:bg-green-50"
           >
             Logout
           </button>
         </div>
 
-        {/* Mobile Button */}
         <button
-          className="md:hidden text-2xl"
-          onClick={() => setOpen(!open)}
+          className="rounded-xl border border-white/20 p-2 text-2xl lg:hidden"
+          onClick={() => setOpen((prev) => !prev)}
+          aria-label="Toggle navigation menu"
         >
-          ☰
+          {open ? "×" : "☰"}
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden bg-green-800 px-4 pb-4 flex flex-col gap-3">
+        <div className="border-t border-white/10 bg-brand-900/95 px-4 py-4 lg:hidden">
+          <div className="flex flex-col gap-2">
+            {user?.role === "admin" && (
+              <Link
+                to="/admin"
+                onClick={closeMenu}
+                className="rounded-2xl bg-white/10 px-4 py-3 text-sm"
+              >
+                Admin Panel
+              </Link>
+            )}
 
-          {user?.role === "admin" && (
-            <Link to="/admin" onClick={() => setOpen(false)}>
-              Admin Panel
-            </Link>
-          )}
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={closeMenu}
+                className={`rounded-2xl px-4 py-3 text-sm ${
+                  location.pathname === link.to
+                    ? "bg-white text-brand-700"
+                    : "bg-white/8"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
 
-          <Link to="/home" onClick={() => setOpen(false)}>Home</Link>
-          <Link to="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
-          <Link to="/report" onClick={() => setOpen(false)}>Report Crime</Link>
-          <Link to="/my-reports" onClick={() => setOpen(false)}>My Reports</Link>
-          <Link to="/education" onClick={() => setOpen(false)}>Education</Link>
-
-          {user?.role === "admin" && (
-            <span className="text-sm bg-yellow-400 text-black px-2 py-1 rounded w-fit">
-              Admin
-            </span>
-          )}
-
-          <button
-            onClick={logout}
-            className="bg-green-600 px-4 py-2 rounded hover:bg-green-500 w-full"
-          >
-            Logout
-          </button>
+            <button
+              onClick={handleLogout}
+              className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-brand-700"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       )}
     </nav>
