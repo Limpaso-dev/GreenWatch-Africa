@@ -1,10 +1,44 @@
 const Report = require("../models/Report");
 const fs = require("fs");
+const mongoose = require("mongoose");
+const path = require("path");
+
+const normalizeText = (value) => value?.toString().trim();
+
+const normalizePhotoPath = (photoPath) =>
+  photoPath ? photoPath.replace(/\\/g, "/") : photoPath;
+
+const formatReportResponse = (report) => {
+  const formattedReport = report.toObject ? report.toObject() : report;
+
+  return {
+    ...formattedReport,
+    photo: normalizePhotoPath(formattedReport.photo),
+  };
+};
+
+const resolvePhotoFilePath = (photoPath) => {
+  if (!photoPath) {
+    return null;
+  }
+
+  if (path.isAbsolute(photoPath)) {
+    return photoPath;
+  }
+
+  const sanitizedRelativePath = photoPath
+    .replace(/^\/+/, "")
+    .replace(/[\\/]+/g, path.sep);
+
+  return path.resolve(__dirname, "../../", sanitizedRelativePath);
+};
 
 // ================= CREATE REPORT =================
 const createReport = async (req, res) => {
   try {
-    const { type, description, location } = req.body;
+    const type = normalizeText(req.body.type);
+    const description = normalizeText(req.body.description);
+    const location = normalizeText(req.body.location);
 
     if (!type || !description || !location) {
       return res.status(400).json({
@@ -12,7 +46,7 @@ const createReport = async (req, res) => {
       });
     }
 
-    const photo = req.file ? req.file.path : null;
+    const photo = req.file ? `uploads/${req.file.filename}` : null;
 
     const report = await Report.create({
       type,
@@ -24,11 +58,10 @@ const createReport = async (req, res) => {
 
     return res.status(201).json({
       message: "Report submitted successfully",
-      report,
+      report: formatReportResponse(report),
     });
-
   } catch (error) {
-    console.error("❌ Create Report Error:", error.message);
+    console.error("Create Report Error:", error.message);
 
     return res.status(500).json({
       message: "Failed to create report",
@@ -43,10 +76,9 @@ const getReports = async (req, res) => {
       .populate("reportedBy", "name email")
       .sort({ createdAt: -1 });
 
-    return res.json({ reports });
-
+    return res.json({ reports: reports.map(formatReportResponse) });
   } catch (error) {
-    console.error("❌ Get Reports Error:", error.message);
+    console.error("Get Reports Error:", error.message);
 
     return res.status(500).json({
       message: "Failed to fetch reports",
@@ -61,10 +93,9 @@ const getAllReports = async (req, res) => {
       .populate("reportedBy", "name email")
       .sort({ createdAt: -1 });
 
-    return res.json({ reports });
-
+    return res.json({ reports: reports.map(formatReportResponse) });
   } catch (error) {
-    console.error("❌ Get All Reports Error:", error.message);
+    console.error("Get All Reports Error:", error.message);
 
     return res.status(500).json({
       message: "Failed to fetch all reports",
@@ -75,6 +106,12 @@ const getAllReports = async (req, res) => {
 // ================= DELETE REPORT =================
 const deleteReport = async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid report ID",
+      });
+    }
+
     const report = await Report.findById(req.params.id);
 
     if (!report) {
@@ -83,7 +120,6 @@ const deleteReport = async (req, res) => {
       });
     }
 
-    // Check ownership or admin
     if (
       req.user.role !== "admin" &&
       report.reportedBy.toString() !== req.user._id.toString()
@@ -93,9 +129,10 @@ const deleteReport = async (req, res) => {
       });
     }
 
-    // ✅ Delete image if exists
-    if (report.photo && fs.existsSync(report.photo)) {
-      fs.unlinkSync(report.photo);
+    const photoFilePath = resolvePhotoFilePath(report.photo);
+
+    if (photoFilePath && fs.existsSync(photoFilePath)) {
+      fs.unlinkSync(photoFilePath);
     }
 
     await report.deleteOne();
@@ -103,9 +140,8 @@ const deleteReport = async (req, res) => {
     return res.json({
       message: "Report deleted successfully",
     });
-
   } catch (error) {
-    console.error("❌ Delete Report Error:", error.message);
+    console.error("Delete Report Error:", error.message);
 
     return res.status(500).json({
       message: "Failed to delete report",
@@ -116,7 +152,13 @@ const deleteReport = async (req, res) => {
 // ================= UPDATE STATUS (ADMIN) =================
 const updateReportStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid report ID",
+      });
+    }
+
+    const status = normalizeText(req.body.status);
 
     if (!["pending", "resolved"].includes(status)) {
       return res.status(400).json({
@@ -137,11 +179,10 @@ const updateReportStatus = async (req, res) => {
 
     return res.json({
       message: "Report status updated",
-      report,
+      report: formatReportResponse(report),
     });
-
   } catch (error) {
-    console.error("❌ Update Status Error:", error.message);
+    console.error("Update Status Error:", error.message);
 
     return res.status(500).json({
       message: "Failed to update report status",

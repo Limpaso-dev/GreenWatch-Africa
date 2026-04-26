@@ -4,17 +4,20 @@ const reportSchema = new mongoose.Schema(
 {
   type: { 
     type: String, 
-    required: true 
+    required: true,
+    trim: true
   },
 
   description: { 
     type: String, 
-    required: true 
+    required: true,
+    trim: true
   },
 
   location: { 
     type: String, 
-    required: true 
+    required: true,
+    trim: true
   },
 
   photo: { 

@@ -4,15 +4,17 @@ const mongoose = require("mongoose");
 const formatPhone = (phone) => {
   if (!phone) return phone;
 
-  if (phone.startsWith("0")) {
-    return "254" + phone.substring(1);
+  const normalizedPhone = phone.toString().trim().replace(/\s+/g, "");
+
+  if (normalizedPhone.startsWith("0")) {
+    return "254" + normalizedPhone.substring(1);
   }
 
-  if (phone.startsWith("+254")) {
-    return phone.replace("+", "");
+  if (normalizedPhone.startsWith("+254")) {
+    return normalizedPhone.replace("+", "");
   }
 
-  return phone;
+  return normalizedPhone;
 };
 
 // ================= PHONE VALIDATOR =================
@@ -49,7 +51,6 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
-    // 📱 Phone (M-Pesa critical)
     phone: {
       type: String,
       required: true,
@@ -61,7 +62,6 @@ const userSchema = new mongoose.Schema(
       },
     },
 
-    // 💎 Premium access
     isPremium: {
       type: Boolean,
       default: false,
@@ -74,17 +74,25 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ================= AUTO PREMIUM DATE =================
-userSchema.pre("findOneAndUpdate", function (next) {
+// ✅ FIXED: NO next()
+userSchema.pre("save", async function () {
+  if (this.isModified("isPremium") && this.isPremium && !this.premiumSince) {
+    this.premiumSince = new Date();
+  }
+});
+
+// ✅ FIXED: NO next()
+userSchema.pre("findOneAndUpdate", async function () {
   const update = this.getUpdate();
 
   if (update?.isPremium === true) {
     update.premiumSince = new Date();
   }
-
-  next();
 });
 
-// ================= EXPORT =================
-module.exports =
-  mongoose.models.User || mongoose.model("User", userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+
+User.formatPhone = formatPhone;
+User.validatePhone = validatePhone;
+
+module.exports = User;

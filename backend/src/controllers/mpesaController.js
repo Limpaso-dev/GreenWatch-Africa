@@ -18,26 +18,10 @@ const getAccessToken = async () => {
     );
 
     return data.access_token;
-
   } catch (error) {
-    console.error("❌ Access Token Error:", error.response?.data || error.message);
+    console.error("Access Token Error:", error.response?.data || error.message);
     throw new Error("Failed to get access token");
   }
-};
-
-// ================= FORMAT PHONE =================
-const formatPhone = (phone) => {
-  if (!phone) return null;
-
-  if (phone.startsWith("0")) {
-    return "254" + phone.substring(1);
-  }
-
-  if (phone.startsWith("+254")) {
-    return phone.replace("+", "");
-  }
-
-  return phone;
 };
 
 // ================= STK PUSH =================
@@ -49,14 +33,30 @@ const stkPush = async (req, res) => {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
-    phone = formatPhone(phone);
+    phone = User.formatPhone(phone);
 
-    // 🔥 DEBUG LOG
-    console.log("📲 STK Request for:", phone);
+    if (!User.validatePhone(phone)) {
+      return res.status(400).json({
+        message: "Invalid phone number. Use format 07XXXXXXXX",
+      });
+    }
+
+    if (
+      !process.env.CONSUMER_KEY ||
+      !process.env.CONSUMER_SECRET ||
+      !process.env.SHORTCODE ||
+      !process.env.PASSKEY ||
+      !process.env.CALLBACK_URL
+    ) {
+      return res.status(500).json({
+        message: "M-Pesa credentials missing",
+      });
+    }
+
+    console.log("STK Request for:", phone);
 
     const token = await getAccessToken();
 
-    // Timestamp
     const timestamp = new Date()
       .toISOString()
       .replace(/[-:TZ.]/g, "")
@@ -67,13 +67,6 @@ const stkPush = async (req, res) => {
       process.env.PASSKEY +
       timestamp
     ).toString("base64");
-
-    // 🔥 DEBUG ENV CHECK
-    if (!process.env.SHORTCODE || !process.env.PASSKEY) {
-      return res.status(500).json({
-        message: "M-Pesa credentials missing",
-      });
-    }
 
     const { data } = await axios.post(
       "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
@@ -93,21 +86,20 @@ const stkPush = async (req, res) => {
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json", // ✅ FIXED
+          "Content-Type": "application/json",
         },
         timeout: 10000,
       }
     );
 
-    console.log("✅ STK Push Response:", data);
+    console.log("STK Push Response:", data);
 
     return res.status(200).json({
       message: "STK Push sent successfully",
       data,
     });
-
   } catch (error) {
-    console.error("❌ STK Push Error FULL:", error.response?.data || error.message);
+    console.error("STK Push Error FULL:", error.response?.data || error.message);
 
     return res.status(500).json({
       message: "STK Push failed",
@@ -122,44 +114,43 @@ const mpesaCallback = async (req, res) => {
     const callback = req.body?.Body?.stkCallback;
 
     if (!callback) {
-      console.log("⚠️ Invalid callback structure");
+      console.log("Invalid callback structure");
       return res.json({ message: "Invalid callback" });
     }
 
-    console.log("📥 CALLBACK RECEIVED:", JSON.stringify(callback, null, 2));
+    console.log("CALLBACK RECEIVED:", JSON.stringify(callback, null, 2));
 
     const resultCode = callback.ResultCode;
 
     if (resultCode === 0) {
       const metadata = callback.CallbackMetadata?.Item || [];
-
-      const phone = metadata.find(i => i.Name === "PhoneNumber")?.Value;
+      const phone = metadata.find((item) => item.Name === "PhoneNumber")?.Value;
 
       if (!phone) {
-        console.log("⚠️ Phone not found in callback");
+        console.log("Phone not found in callback");
         return res.json({ message: "Phone missing" });
       }
 
+      const formattedPhone = User.formatPhone(phone.toString());
+
       const user = await User.findOneAndUpdate(
-        { phone: phone.toString() },
+        { phone: formattedPhone },
         { isPremium: true },
         { new: true }
       );
 
       if (user) {
-        console.log(`💎 PREMIUM ACTIVATED for ${user.email}`);
+        console.log(`PREMIUM ACTIVATED for ${user.email}`);
       } else {
-        console.log("⚠️ No user found for phone:", phone);
+        console.log("No user found for phone:", formattedPhone);
       }
-
     } else {
-      console.log("❌ Payment failed:", callback.ResultDesc);
+      console.log("Payment failed:", callback.ResultDesc);
     }
 
     return res.json({ message: "Callback received" });
-
   } catch (error) {
-    console.error("❌ Callback Error:", error.message);
+    console.error("Callback Error:", error.message);
 
     return res.json({ message: "Callback error handled" });
   }

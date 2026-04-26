@@ -22,11 +22,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // ================= MIDDLEWARE =================
-
-// JSON parser
 app.use(express.json());
-
-// URL encoded
 app.use(express.urlencoded({ extended: true }));
 
 // ================= CORS =================
@@ -34,19 +30,21 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   process.env.FRONTEND_URL,
-];
+].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow Postman + M-Pesa
+      if (!origin) {
+        return callback(null, true);
+      }
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
-      } else {
-        console.warn("❌ Blocked by CORS:", origin);
-        return callback(new Error("CORS not allowed"), false);
       }
+
+      console.warn("Blocked by CORS:", origin);
+      return callback(new Error("CORS not allowed"), false);
     },
     credentials: true,
   })
@@ -54,7 +52,7 @@ app.use(
 
 // ================= LOGGER =================
 app.use((req, res, next) => {
-  console.log(`📡 ${req.method} ${req.originalUrl}`);
+  console.log(`${req.method} ${req.originalUrl}`, req.body);
   next();
 });
 
@@ -68,7 +66,7 @@ const adminRoutes = require("./routes/admin.routes");
 const mpesaRoutes = require("./routes/mpesa.routes");
 
 app.get("/", (req, res) => {
-  res.send("🌍 GreenWatch Africa Backend is running...");
+  res.send("GreenWatch Africa Backend is running...");
 });
 
 app.use("/api/auth", authRoutes);
@@ -83,9 +81,22 @@ app.use((req, res) => {
 
 // ================= ERROR HANDLER =================
 app.use((err, req, res, next) => {
-  console.error("❌ SERVER ERROR:", err.message);
+  console.error("SERVER ERROR:", err.message);
 
-  res.status(err.status || 500).json({
+  let statusCode = err.status || 500;
+
+  if (err.name === "MulterError") {
+    statusCode = 400;
+  }
+
+  if (
+    err.message === "Only image files (jpg, jpeg, png) are allowed" ||
+    err.message === "CORS not allowed"
+  ) {
+    statusCode = err.message === "CORS not allowed" ? 403 : 400;
+  }
+
+  res.status(statusCode).json({
     message: err.message || "Internal Server Error",
   });
 });
@@ -94,5 +105,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

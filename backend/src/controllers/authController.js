@@ -11,10 +11,19 @@ const generateToken = (id, role) => {
   );
 };
 
+// ================= HELPERS =================
+const normalizeEmail = (email) => email?.toString().trim().toLowerCase();
+const sanitizeString = (value) => value?.toString().trim();
+
 // ================= REGISTER =================
 const registerUser = async (req, res) => {
+  console.log("📝 REGISTER REQUEST:", req.body);
+
   try {
-    const { name, email, password, phone } = req.body;
+    const name = sanitizeString(req.body.name);
+    const email = normalizeEmail(req.body.email);
+    const password = req.body.password?.toString();
+    const phone = User.formatPhone(req.body.phone);
 
     // ✅ VALIDATION
     if (!name || !email || !password || !phone) {
@@ -23,7 +32,13 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Check if user exists (email OR phone)
+    if (!User.validatePhone(phone)) {
+      return res.status(400).json({
+        message: "Invalid phone number. Use format 07XXXXXXXX",
+      });
+    }
+
+    // ✅ CHECK EXISTING USER
     const userExists = await User.findOne({
       $or: [{ email }, { phone }],
     });
@@ -34,13 +49,13 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Hash password
+    // ✅ HASH PASSWORD
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Assign role
+    // ✅ ASSIGN ROLE
     const role = email === "admin@gmail.com" ? "admin" : "user";
 
-    // Create user
+    // ✅ CREATE USER
     const user = await User.create({
       name,
       email,
@@ -49,6 +64,7 @@ const registerUser = async (req, res) => {
       role,
     });
 
+    // ✅ RESPONSE
     res.status(201).json({
       message: "User registered successfully",
       token: generateToken(user._id, user.role),
@@ -63,10 +79,27 @@ const registerUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Register Error:", error.message);
+    console.error("❌ REGISTER ERROR FULL:", error);
 
+    // Duplicate key error (email/phone)
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "User already exists (email or phone)",
+      });
+    }
+
+    // Mongoose validation error
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message:
+          Object.values(error.errors)[0]?.message ||
+          "Invalid user data",
+      });
+    }
+
+    // Fallback
     res.status(500).json({
-      message: "Registration failed",
+      message: error.message || "Registration failed",
     });
   }
 };
@@ -74,7 +107,8 @@ const registerUser = async (req, res) => {
 // ================= LOGIN =================
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const password = req.body.password?.toString();
 
     if (!email || !password) {
       return res.status(400).json({
@@ -82,6 +116,7 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // include password
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
@@ -112,10 +147,10 @@ const loginUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Login Error:", error.message);
+    console.error("❌ LOGIN ERROR:", error);
 
     res.status(500).json({
-      message: "Login failed",
+      message: error.message || "Login failed",
     });
   }
 };
@@ -134,10 +169,10 @@ const getMe = async (req, res) => {
     res.json(user);
 
   } catch (error) {
-    console.error("❌ GetMe Error:", error.message);
+    console.error("❌ GET ME ERROR:", error);
 
     res.status(500).json({
-      message: "Failed to fetch user",
+      message: error.message || "Failed to fetch user",
     });
   }
 };
@@ -146,5 +181,5 @@ const getMe = async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
-  getMe, // ✅ THIS FIXES YOUR 404
+  getMe,
 };
